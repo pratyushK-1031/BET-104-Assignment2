@@ -1,0 +1,42 @@
+configfile: "config.yaml"
+
+N = config["n"]
+K_VALUES = config["k_values"]
+REPEATS = config["repeats"]
+SEED = config["seed"]
+
+
+rule all:
+    input:
+        "final/plot.png"
+
+
+rule sample:
+    output:
+        "data/means_k{k}.tsv"
+    params:
+        n = N,
+        repeats = REPEATS,
+        seed = SEED
+    shell:
+        "python scripts/sample.py {params.n} {wildcards.k} {params.repeats} {params.seed} {output}"
+
+
+rule combine:
+    input:
+        expand("data/means_k{k}.tsv", k=K_VALUES)
+    output:
+        "data/all_means.tsv"
+    shell:
+        "python scripts/combine.py {output} {input}"
+
+
+rule plot:
+    input:
+        "data/all_means.tsv"
+    output:
+        "final/plot.png"
+    params:
+        n = N
+    shell:
+        "python scripts/plot.py {input} {output} {params.n}"
